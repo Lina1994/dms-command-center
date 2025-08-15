@@ -1,0 +1,114 @@
+.sidebar {
+  width: 200px;
+  background-color: #333;
+  color: white;
+  padding: 20px;
+  height: 100vh; /* Ocupa toda la altura de la ventana */
+  position: fixed; /* Fija la barra lateral */
+  top: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; /* Pushes the button to the bottom */
+  transition: width 0.3s ease;
+}
+
+.sidebar.collapsed {
+  width: 80px;
+}
+
+.sidebar-nav {
+  list-style: none;
+  padding: 0;
+}
+
+.sidebar-nav li {
+  margin-bottom: 10px;
+}
+
+.sidebar-nav a {
+  color: white;
+  text-decoration: none;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 10px;
+  border-radius: 5px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.sidebar.collapsed .sidebar-nav a {
+  justify-content: center;
+  padding: 10px;
+}
+
+.sidebar-nav a svg {
+  width: 24px;
+  height: 24px;
+  stroke-width: 2;
+  flex-shrink: 0; /* Prevent icon from shrinking */
+}
+
+.sidebar-nav a .link-text {
+  opacity: 1;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.sidebar.collapsed .link-text {
+  opacity: 0;
+  width: 0;
+}
+
+.sidebar-nav a:hover {
+  background-color: #555;
+}
+
+.sidebar-nav a.active {
+  background-image: linear-gradient(to bottom, #333, #555);
+  color: white;
+}
+
+.sidebar-footer {
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+  padding-top: 15px;
+  border-top: 1px solid #555;
+  margin-bottom: 40px;
+}
+
+.sidebar.collapsed .sidebar-footer {
+  flex-direction: column;
+  gap: 15px;
+  border-top: none;
+  padding-top: 15px;
+}
+
+.theme-toggle-button,
+.sidebar-toggle-button {
+  background-color: transparent;
+  color: white;
+  border: 1px solid #555;
+  padding: 8px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.theme-toggle-button:hover,
+.sidebar-toggle-button:hover {
+  background-color: #555;
+  border-color: #777;
+}
+
+.theme-toggle-button svg,
+.sidebar-toggle-button svg {
+  width: 20px;
+  height: 20px;
+  stroke: white;
+}
