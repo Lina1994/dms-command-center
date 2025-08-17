@@ -72,11 +72,13 @@
 
 .sidebar-footer {
   display: flex;
-  justify-content: space-evenly;
-  align-items: center;
+  flex-direction: column; /* Stack items vertically */
+  justify-content: flex-end; /* Push content to the bottom */
+  align-items: center; /* Center items horizontally */
   padding-top: 15px;
   border-top: 1px solid #555;
   margin-bottom: 40px;
+  gap: 10px; /* Space between audio player and buttons */
 }
 
 .sidebar.collapsed .sidebar-footer {
@@ -111,4 +113,77 @@
   width: 20px;
   height: 20px;
   stroke: white;
+}
+
+/* New styles for audio player integration */
+.audio-player-controls {
+  width: 100%; /* Occupy full width of sidebar-footer */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px; /* Space between elements */
+  padding: 5px 0;
+  box-sizing: border-box; /* Include padding in width */
+}
+
+.audio-player {
+  width: 90%; /* Adjust as needed to fit */
+  max-width: 180px; /* Max width for the audio element */
+  height: 30px; /* Smaller height for the audio element */
+}
+
+.audio-buttons {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  width: 100%;
+}
+
+.audio-buttons button {
+  background-color: #555;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 0.8em;
+}
+
+.audio-buttons button:hover {
+  background-color: #777;
+}
+
+.audio-buttons input[type="range"] {
+  width: 60px; /* Smaller width for volume slider */
+}
+
+/* Styles for song title marquee effect */
+.song-title-wrapper {
+  width: 90%; /* Adjust to fit within sidebar */
+  overflow: hidden; /* Hide overflowing text */
+  white-space: nowrap; /* Prevent text from wrapping */
+  position: relative; /* For animation */
+  text-align: center; /* Center text initially */
+}
+
+.song-title-text {
+  display: inline-block; /* Allow animation */
+  padding-left: 100%; /* Start text off-screen to the right */
+  animation: marquee 15s linear infinite; /* Apply marquee animation */
+  animation-play-state: running; /* Ensure it runs by default */
+  font-size: 0.9em; /* Smaller font size */
+  color: #ccc; /* Lighter color for song title */
+  margin: 0; /* Remove default paragraph margin */
+}
+
+/* Pause animation on hover */
+.song-title-wrapper:hover .song-title-text {
+  animation-play-state: paused;
+}
+
+/* Keyframes for marquee animation */
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-100%); } /* Move text to the left */
 }

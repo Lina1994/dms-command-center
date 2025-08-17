@@ -1,12 +1,19 @@
 const express = require('express');
 const cors = require('cors');
-const { setupDatabase, migrateDataFromJsons, getMonsters, addMonster, updateMonster, deleteMonster, deleteAllMonsters, getMaps, addMap, updateMap, deleteMap, getShops, addShop, updateShop, deleteShop, addCategory, updateCategory, deleteCategory, addItem, updateItem, deleteItem } = require('./database');
+const path = require('path');
+const { setupDatabase, migrateDataFromJsons, getMonsters, addMonster, updateMonster, deleteMonster, deleteAllMonsters, getMaps, addMap, updateMap, deleteMap, getShops, addShop, updateShop, deleteShop, addCategory, updateCategory, deleteCategory, addItem, updateItem, deleteItem, getSongs, addSong, updateSong, deleteSong } = require('./database');
 
 const app = express();
 const port = 3001;
 
+// Define the path to the music folder
+const musicPath = path.join(__dirname, '..', 'data', 'music');
+
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
+
+// Serve static files from the music folder
+app.use('/music', express.static(musicPath));
 
 // Initialize database and migrate data on startup
 setupDatabase();
@@ -186,6 +193,49 @@ app.put('/items/:id', (req, res) => {
 
 app.delete('/items/:id', (req, res) => {
     const result = deleteItem(req.params.id);
+    if (result.success) {
+        res.json({ changes: result.changes });
+    } else {
+        res.status(500).json({ error: result.error });
+    }
+});
+
+// API Endpoints for Songs
+app.get('/songs', (req, res) => {
+    const result = getSongs();
+    if (result.success) {
+        // Prepend the base URL for the music files
+        const songsWithFullPaths = result.data.map(song => ({
+            ...song,
+            filePath: song.filePath ? `/music/${path.basename(song.filePath)}` : ''
+        }));
+        res.json(songsWithFullPaths);
+    } else {
+        res.status(500).json({ error: result.error });
+    }
+});
+
+app.post('/songs', (req, res) => {
+    const result = addSong(req.body);
+    if (result.success) {
+        res.status(201).json({ id: result.id });
+    } else {
+        res.status(500).json({ error: result.error });
+    }
+});
+
+app.put('/songs/:id', (req, res) => {
+    const song = { ...req.body, id: req.params.id };
+    const result = updateSong(song);
+    if (result.success) {
+        res.json({ changes: result.changes });
+    } else {
+        res.status(500).json({ error: result.error });
+    }
+});
+
+app.delete('/songs/:id', (req, res) => {
+    const result = deleteSong(req.params.id);
     if (result.success) {
         res.json({ changes: result.changes });
     } else {

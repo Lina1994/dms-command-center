@@ -11,7 +11,9 @@ const mapsFilePath = path.join(appDataPath, 'maps.json'); // Still needed for cu
 const currentMapFilePath = path.join(appDataPath, 'currentMap.json');
 const monstersFilePath = path.join(appDataPath, 'monsters.json'); // Still needed for import/export
 const shopsFilePath = path.join(appDataPath, 'shops.json'); // Still needed for import/export
+const songsFilePath = path.join(appDataPath, 'songs.json'); // New: Path for songs data
 const mapsImagesPath = path.join(appDataPath, 'maps_images');
+const musicPath = path.join(appDataPath, 'music');
 
 if (!fs.existsSync(appDataPath)) {
   fs.mkdirSync(appDataPath);
@@ -19,10 +21,15 @@ if (!fs.existsSync(appDataPath)) {
 if (!fs.existsSync(mapsImagesPath)) {
   fs.mkdirSync(mapsImagesPath);
 }
+if (!fs.existsSync(musicPath)) {
+  fs.mkdirSync(musicPath);
+}
 
 console.log('Ruta de datos de la aplicación:', appDataPath);
 console.log('Ruta del archivo de mapas:', mapsFilePath);
 console.log('Ruta de imágenes de mapas:', mapsImagesPath);
+console.log('Ruta de música:', musicPath);
+console.log('Ruta del archivo de canciones:', songsFilePath);
 
 let mainWindow;
 let playerWindow;
@@ -128,6 +135,40 @@ ipcMain.handle('select-map-image', async (event) => {
     return { success: true, sourcePath: sourcePath, fileName: fileName };
   } catch (error) {
     console.error('Error al seleccionar la imagen:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// IPC for selecting a single song file
+ipcMain.handle('select-song-file', async (event) => {
+  try {
+    const { canceled, filePaths } = await dialog.showOpenDialog(mainWindow, {
+      properties: ['openFile'],
+      filters: [{ name: 'Audio', extensions: ['mp3'] }]
+    });
+
+    if (canceled || filePaths.length === 0) {
+      return { success: false, error: 'Selección de archivo cancelada.' };
+    }
+
+    const filePath = filePaths[0];
+
+    return { success: true, filePath: filePath };
+  } catch (error) {
+    console.error('Error al seleccionar el archivo de audio:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// IPC for copying a song file to the music directory
+ipcMain.handle('copy-song-file', async (event, originalPath) => {
+  try {
+    const fileName = path.basename(originalPath);
+    const destinationPath = path.join(musicPath, fileName);
+    fs.copyFileSync(originalPath, destinationPath);
+    return { success: true, newPath: destinationPath };
+  } catch (error) {
+    console.error('Error al copiar el archivo de audio:', error);
     return { success: false, error: error.message };
   }
 });
@@ -550,7 +591,7 @@ ipcMain.on('import-monsters-from-excel', async (event) => {
         type: row['Tipo'] || '',
         alignment: row['Alineamiento'] || '',
         origin: row['Origen'] || '',
-        size: row['Tamaño'] || '',
+        size: String(row['Tamaño'] || ''),
         px: String(row['PX'] || ''),
         armor: row['Armadura'] || '',
         hp: row['Puntos de golpe'] || '',
@@ -560,7 +601,7 @@ ipcMain.on('import-monsters-from-excel', async (event) => {
         con: String(row['CONS'] || ''),
         int: String(row['INT'] || ''),
         wis: String(row['SAB'] || ''),
-        car: String(row['CAR'] || ''),
+        cha: String(row['CAR'] || ''),
       savingThrows: row['Tiradas de salvación'] || '',
       skills: row['Habilidades'] || '',
       senses: row['Sentidos'] || '',
@@ -613,7 +654,7 @@ ipcMain.on('export-monsters-to-excel', async (event, monstersToExport) => {
 
     const dataForExcel = monstersToExport.map(monster => [
       monster.name, monster.vd, monster.type, monster.alignment, monster.origin, monster.size, monster.px, monster.armor,
-      monster.hp, monster.speed, monster.str, monster.dex, monster.con, monster.int, monster.wis, monster.car,
+      monster.hp, monster.speed, monster.str, monster.dex, monster.con, monster.int, monster.wis, monster.cha,
       monster.savingThrows, monster.skills, monster.senses, monster.languages,
       monster.damageResistances, monster.damageImmunities, monster.conditionImmunities,
       monster.damageVulnerabilities, monster.traits, monster.actions, monster.legendaryActions,
@@ -631,5 +672,35 @@ ipcMain.on('export-monsters-to-excel', async (event, monstersToExport) => {
   } catch (error) {
     console.error('Error al exportar monstruos a Excel:', error);
     event.reply('export-monsters-result', { success: false, error: error.message });
+  }
+});
+
+// IPC para guardar canciones (asíncrono)
+ipcMain.on('save-songs', async (event, songsFromRenderer) => {
+  try {
+    fs.writeFileSync(songsFilePath, JSON.stringify(songsFromRenderer, null, 2));
+    console.log('Canciones guardadas exitosamente en:', songsFilePath);
+    event.returnValue = { success: true };
+  } catch (error) {
+    console.error('Error al guardar canciones:', error);
+    event.returnValue = { success: false, error: error.message };
+  }
+});
+
+// IPC para cargar canciones
+ipcMain.on('load-songs', (event) => {
+  try {
+    if (fs.existsSync(songsFilePath)) {
+      const songsData = fs.readFileSync(songsFilePath, 'utf8');
+      const songs = JSON.parse(songsData);
+      console.log('Canciones cargadas exitosamente desde:', songsFilePath);
+      event.returnValue = { success: true, songs: songs };
+    } else {
+      console.log('No se encontró el archivo de canciones, devolviendo lista vacía.');
+      event.returnValue = { success: true, songs: [] };
+    }
+  } catch (error) {
+    console.error('Error al cargar canciones:', error);
+    event.returnValue = { success: false, error: error.message };
   }
 });
