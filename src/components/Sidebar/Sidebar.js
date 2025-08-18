@@ -5,7 +5,8 @@ import './Sidebar.css';
 
 function Sidebar({ isCollapsed, toggleSidebar }) {
   const [theme, setTheme] = useState('dark'); // Default theme
-  const { currentSong, audioRef, pauseSong, stopSong, setVolume } = useAudioPlayer();
+  const { currentSong, audioRef, isPlaying, togglePlayPause, setVolume } = useAudioPlayer();
+  const [showVolume, setShowVolume] = useState(false);
 
   useEffect(() => {
     document.body.className = theme;
@@ -13,6 +14,10 @@ function Sidebar({ isCollapsed, toggleSidebar }) {
 
   const toggleTheme = () => {
     setTheme((prevTheme) => (prevTheme === 'dark' ? 'light' : 'dark'));
+  };
+
+  const handleVolumeChange = (e) => {
+    setVolume(e.target.value);
   };
 
   return (
@@ -35,8 +40,24 @@ function Sidebar({ isCollapsed, toggleSidebar }) {
             <div className="song-title-wrapper">
               <p className="song-title-text">Reproduciendo: {currentSong.name} - {currentSong.group}</p>
             </div>
-            <audio ref={audioRef} controls className="audio-player" />
-            
+            <audio ref={audioRef} className="audio-player" />
+            <div className="custom-audio-controls">
+              <button className="play-pause-button" onClick={togglePlayPause}>
+                {isPlaying ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="feather feather-pause"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="feather feather-play"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                )}
+              </button>
+              <div className="volume-control" onMouseEnter={() => setShowVolume(true)} onMouseLeave={() => setShowVolume(false)}>
+                <button className="volume-button">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="feather feather-volume-2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+                </button>
+                {showVolume && (
+                  <input type="range" min="0" max="1" step="0.01" defaultValue="1" onChange={handleVolumeChange} className="volume-slider-vertical" />
+                )}
+              </div>
+            </div>
           </div>
         )}
         <button className="theme-toggle-button" onClick={toggleTheme}>

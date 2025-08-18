@@ -1,12 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './MonsterSheetModal.css';
 
 function MonsterSheetModal({ onClose, monster, onUpdateMonster, onDelete }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedMonster, setEditedMonster] = useState(monster);
+  const modalRef = useRef(null);
 
   useEffect(() => {
     setEditedMonster(monster);
+  }, [monster]);
+
+  useEffect(() => {
+    if (modalRef.current) {
+      const styles = window.getComputedStyle(modalRef.current);
+      console.log('Modal classes:', modalRef.current.className);
+      console.log('Modal width:', styles.width);
+      console.log('Modal max-width:', styles.maxWidth);
+    }
   }, [monster]);
 
   if (!monster) {
@@ -51,7 +61,7 @@ function MonsterSheetModal({ onClose, monster, onUpdateMonster, onDelete }) {
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content monster-sheet-modal-content" onClick={(e) => e.stopPropagation()}>
+      <div ref={modalRef} className="modal-content monster-sheet-modal-content" onClick={(e) => e.stopPropagation()}>
         {isEditing ? (
           <input type="text" name="name" value={editedMonster.name || ''} onChange={handleChange} className="monster-name-edit" />
         ) : (

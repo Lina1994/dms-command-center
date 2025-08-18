@@ -187,3 +187,46 @@
   0% { transform: translateX(0); }
   100% { transform: translateX(-100%); } /* Move text to the left */
 }
+
+.custom-audio-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 10px;
+  gap: 15px;
+}
+
+.play-pause-button, .volume-button {
+  background-color: #555;
+  border: none;
+  color: white;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+}
+
+.play-pause-button:hover, .volume-button:hover {
+  background-color: #777;
+}
+
+.play-pause-button svg, .volume-button svg {
+  width: 20px;
+  height: 20px;
+}
+
+.volume-control {
+  position: relative;
+}
+
+.volume-slider-vertical {
+  position: absolute;
+  bottom: 50px; /* Position above the button */
+  left: 45%;
+  transform: translateX(-50%) rotate(-90deg);
+  width: 50px;
+  cursor: pointer;
+}
