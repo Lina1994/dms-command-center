@@ -1,0 +1,41 @@
+[
+  {
+    "id": "shop_blacksmith",
+    "name": "Herrería",
+    "categories": [
+      {
+        "id": "cat_weapons",
+        "name": "Armas",
+        "items": [
+          {
+            "id": "weapon_2",
+            "name": "Arco Corto",
+            "type": "Sencilla a distancia",
+            "price": "25 po",
+            "damage": "1d6 perforante",
+            "weight": "2 lb",
+            "properties": "Munición (alcance 80/320), dos manos",
+            "origin": "Manual del Jugador"
+          }
+        ]
+      },
+      {
+        "id": "cat_armor",
+        "name": "Armaduras",
+        "items": [
+          {
+            "id": "armor_1",
+            "name": "Cota de Malla",
+            "type": "Pesada",
+            "price": "75 po",
+            "armorClass": "16",
+            "strength": "FUE 13",
+            "stealth": "Desventaja",
+            "weight": "55 lb",
+            "origin": "Manual del Jugador"
+          }
+        ]
+      }
+    ]
+  }
+]
