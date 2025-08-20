@@ -38,7 +38,7 @@ function Maps() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedGroup, setSelectedGroup] = useState('');
   const [playerWindowDimensions, setPlayerWindowDimensions] = useState(null);
-  const { playSong, stopSong } = useAudioPlayer();
+  const { playSong, stopSong, currentSong } = useAudioPlayer();
 
   const previewContainerRef = useRef(null);
   const previewImageRef = useRef(null);
@@ -218,6 +218,40 @@ function Maps() {
     }
   };
 
+  const handleAddMaps = async (mapsData) => {
+    const newMaps = mapsData.map(mapData => {
+      const { group, imageData, originalWidth, originalHeight, ...rest } = mapData;
+      return {
+        ...rest,
+        id: mapData.id || generateUniqueId(),
+        group_name: group,
+        image_data: imageData,
+        zoom: 1, rotation: 0, panX: 0, panY: 0,
+        originalWidth,
+        originalHeight
+      };
+    });
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/maps/bulk`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newMaps),
+      });
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      const savedMaps = await response.json();
+      const newMapsWithIds = newMaps.map((map, index) => ({ ...map, id: savedMaps[index].id }));
+      setMaps(prevMaps => [...prevMaps, ...newMapsWithIds]);
+      handleCloseAddModal();
+    } catch (error) {
+      console.error('Error adding maps:', error);
+    }
+  };
+
   const handleEditMap = async (editedMap) => {
     const { group, ...rest } = editedMap;
     const mapToUpdate = {
@@ -284,16 +318,15 @@ function Maps() {
       ipcRenderer.send('display-map-player-window', map);
     }
     setCurrentPreviewMap(map);
-
-    // Play associated song in the main window's context
-    if (map.song_id && map.song_name && map.song_filePath) {
-      playSong({
-        id: map.song_id,
-        name: map.song_name,
-        filePath: map.song_filePath,
-      });
-    } else {
-      stopSong(); // Stop any currently playing song if no song is associated
+  
+    const newSong = map.song_id && map.song_name && map.song_filePath
+      ? { id: map.song_id, name: map.song_name, filePath: map.song_filePath }
+      : null;
+  
+    if (newSong) {
+      if (!currentSong || (currentSong.id !== newSong.id)) {
+        playSong(newSong);
+      }
     }
   };
 
@@ -471,7 +504,7 @@ function Maps() {
   const getPreviewImageStyle = () => {
       if (!currentPreviewMap) return {};
       return {
-        transform: `translate(${currentPreviewMap.panX}px, ${currentPreviewMap.panY}px) scale(${currentPreviewMap.zoom}) rotate(${currentPreviewMap.rotation}deg)`,
+        transform: `translate(${currentPreviewMap.panX}px, ${currentPreviewMap.panY}px) scale(${currentPreviewMap.zoom}) rotate(${currentPreviewMap.rotation}deg)`
       }
   }
 
@@ -627,7 +660,7 @@ function Maps() {
       </div>
 
       {isAddModalOpen && (
-        <AddMapModal onClose={handleCloseAddModal} onAddMap={handleAddMap} />
+        <AddMapModal onClose={handleCloseAddModal} onAddMap={handleAddMap} onAddMaps={handleAddMaps} />
       )}
 
       {isEditModalOpen && (

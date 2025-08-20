@@ -219,6 +219,47 @@ function addMap(map) {
     }
 }
 
+function addMaps(maps) {
+    const stmt = db.prepare('INSERT INTO maps (id, name, group_name, url, imagePath, image_data, keepOpen, zoom, rotation, panX, panY, original_width, original_height, notes, song_id) VALUES (@id, @name, @group_name, @url, @imagePath, @image_data, @keepOpen, @zoom, @rotation, @panX, @panY, @original_width, @original_height, @notes, @song_id)');
+    const transaction = db.transaction((maps) => {
+        const ids = [];
+        for (const map of maps) {
+            let imageDataBuffer = null;
+            if (map.image_data) {
+                const base64Data = map.image_data.replace(/^data:image\/\w+;base64,/, "");
+                imageDataBuffer = Buffer.from(base64Data, 'base64');
+            }
+            const mapToInsert = {
+                id: map.id,
+                name: map.name,
+                group_name: map.group_name || null,
+                url: map.url || null,
+                imagePath: map.imagePath || null,
+                image_data: imageDataBuffer,
+                keepOpen: map.keepOpen ? 1 : 0,
+                zoom: map.zoom || 1,
+                rotation: map.rotation || 0,
+                panX: map.panX || 0,
+                panY: map.panY || 0,
+                original_width: map.originalWidth || null,
+                original_height: map.originalHeight || null,
+                notes: map.notes || null,
+                song_id: map.song_id || null
+            };
+            stmt.run(mapToInsert);
+            ids.push({ id: map.id });
+        }
+        return ids;
+    });
+
+    try {
+        const ids = transaction(maps);
+        return { success: true, ids };
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+}
+
 function updateMap(map) {
     console.log('Backend: updateMap called with:', map.name);
     try {
@@ -626,4 +667,4 @@ function migrateDataFromJsons() {
 }
 
 // Exportamos
-module.exports = { db, setupDatabase, migrateDataFromJsons, getMonsters, addMonster, updateMonster, deleteMonster, deleteAllMonsters, getMaps, addMap, updateMap, deleteMap, getShops, addShop, updateShop, deleteShop, addCategory, updateCategory, deleteCategory, addItem, updateItem, deleteItem, getSongs, addSong, updateSong, deleteSong, syncShops };
+module.exports = { db, setupDatabase, migrateDataFromJsons, getMonsters, addMonster, updateMonster, deleteMonster, deleteAllMonsters, getMaps, addMap, addMaps, updateMap, deleteMap, getShops, addShop, updateShop, deleteShop, addCategory, updateCategory, deleteCategory, addItem, updateItem, deleteItem, getSongs, addSong, updateSong, deleteSong, syncShops };
