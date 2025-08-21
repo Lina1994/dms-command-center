@@ -60,6 +60,17 @@ CREATE TABLE IF NOT EXISTS songs (
     group_name TEXT,
     filePath TEXT
 );
+
+CREATE TABLE IF NOT EXISTS campaigns (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    image_data BLOB,
+    description TEXT,
+    author TEXT,
+    game TEXT,
+    participants TEXT,
+    notes TEXT
+);
 `;
 
 // Add migration for song_id column to maps table
@@ -94,6 +105,12 @@ function setupDatabase() {
     }
     if (!columnExists('categories', 'type')) {
         db.exec('ALTER TABLE categories ADD COLUMN type TEXT;');
+    }
+    if (columnExists('campaigns', 'image')) {
+        db.exec('ALTER TABLE campaigns RENAME COLUMN image TO image_data_old');
+        db.exec('ALTER TABLE campaigns ADD COLUMN image_data BLOB');
+        // Here you could add logic to migrate data from image to image_data if needed
+        db.exec('ALTER TABLE campaigns DROP COLUMN image_data_old');
     }
     db.exec(`PRAGMA foreign_keys = ON;`); // Ensure foreign keys are on after setup
     console.log('Base de datos SQLite inicializada y lista.');
@@ -569,6 +586,68 @@ function deleteSong(songId) {
     }
 }
 
+// Campaign CRUD
+function getCampaigns() {
+    try {
+        const stmt = db.prepare('SELECT * FROM campaigns');
+        const data = stmt.all();
+        const campaignsWithImageData = data.map(campaign => {
+            const newCampaign = { ...campaign };
+            if (newCampaign.image_data) {
+                newCampaign.image_data = `data:image/png;base64,${newCampaign.image_data.toString('base64')}`;
+            }
+            return newCampaign;
+        });
+        return { success: true, data: campaignsWithImageData };
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+}
+
+function addCampaign(campaign) {
+    try {
+        let imageDataBuffer = null;
+        if (campaign.image_data) {
+            const base64Data = campaign.image_data.replace(/^data:image\/\w+;base64,/, "");
+            imageDataBuffer = Buffer.from(base64Data, 'base64');
+        }
+        const stmt = db.prepare('INSERT INTO campaigns (id, name, image_data, description, author, game, participants, notes) VALUES (@id, @name, @image_data, @description, @author, @game, @participants, @notes)');
+        const campaignToInsert = { ...campaign, image_data: imageDataBuffer };
+        const info = stmt.run(campaignToInsert);
+        return { success: true, id: campaign.id };
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+}
+
+function updateCampaign(campaign) {
+    try {
+        let imageDataBuffer = null;
+        if (campaign.image_data && campaign.image_data.startsWith('data:image')) {
+            const base64Data = campaign.image_data.replace(/^data:image\/\w+;base64,/, "");
+            imageDataBuffer = Buffer.from(base64Data, 'base64');
+        } else {
+            imageDataBuffer = campaign.image_data;
+        }
+        const stmt = db.prepare('UPDATE campaigns SET name = @name, image_data = @image_data, description = @description, author = @author, game = @game, participants = @participants, notes = @notes WHERE id = @id');
+        const campaignToUpdate = { ...campaign, image_data: imageDataBuffer };
+        const info = stmt.run(campaignToUpdate);
+        return { success: true, changes: info.changes };
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+}
+
+function deleteCampaign(campaignId) {
+    try {
+        const stmt = db.prepare('DELETE FROM campaigns WHERE id = ?');
+        const info = stmt.run(campaignId);
+        return { success: true, changes: info.changes };
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+}
+
 // Function to migrate data from JSON
 function migrateDataFromJsons() {
     console.log('Comprobando si es necesaria la migración de datos...');
@@ -667,4 +746,4 @@ function migrateDataFromJsons() {
 }
 
 // Exportamos
-module.exports = { db, setupDatabase, migrateDataFromJsons, getMonsters, addMonster, updateMonster, deleteMonster, deleteAllMonsters, getMaps, addMap, addMaps, updateMap, deleteMap, getShops, addShop, updateShop, deleteShop, addCategory, updateCategory, deleteCategory, addItem, updateItem, deleteItem, getSongs, addSong, updateSong, deleteSong, syncShops };
+module.exports = { db, setupDatabase, migrateDataFromJsons, getMonsters, addMonster, updateMonster, deleteMonster, deleteAllMonsters, getMaps, addMap, addMaps, updateMap, deleteMap, getShops, addShop, updateShop, deleteShop, addCategory, updateCategory, deleteCategory, addItem, updateItem, deleteItem, getSongs, addSong, updateSong, deleteSong, syncShops, getCampaigns, addCampaign, updateCampaign, deleteCampaign };

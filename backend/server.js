@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const { setupDatabase, migrateDataFromJsons, getMonsters, addMonster, updateMonster, deleteMonster, deleteAllMonsters, getMaps, addMap, addMaps, updateMap, deleteMap, getShops, addShop, updateShop, deleteShop, addCategory, updateCategory, deleteCategory, addItem, updateItem, deleteItem, getSongs, addSong, updateSong, deleteSong, syncShops } = require('./database');
+const { setupDatabase, migrateDataFromJsons, getMonsters, addMonster, updateMonster, deleteMonster, deleteAllMonsters, getMaps, addMap, addMaps, updateMap, deleteMap, getShops, addShop, updateShop, deleteShop, addCategory, updateCategory, deleteCategory, addItem, updateItem, deleteItem, getSongs, addSong, updateSong, deleteSong, syncShops, getCampaigns, addCampaign, updateCampaign, deleteCampaign } = require('./database');
 
 const app = express();
 const port = 3001;
@@ -256,6 +256,44 @@ app.put('/songs/:id', (req, res) => {
 
 app.delete('/songs/:id', (req, res) => {
     const result = deleteSong(req.params.id);
+    if (result.success) {
+        res.json({ changes: result.changes });
+    } else {
+        res.status(500).json({ error: result.error });
+    }
+});
+
+// API Endpoints for Campaigns
+app.get('/campaigns', (req, res) => {
+    const result = getCampaigns();
+    if (result.success) {
+        res.json(result.data);
+    } else {
+        res.status(500).json({ error: result.error });
+    }
+});
+
+app.post('/campaigns', (req, res) => {
+    const result = addCampaign(req.body);
+    if (result.success) {
+        res.status(201).json({ id: result.id });
+    } else {
+        res.status(500).json({ error: result.error });
+    }
+});
+
+app.put('/campaigns/:id', (req, res) => {
+    const campaign = { ...req.body, id: req.params.id };
+    const result = updateCampaign(campaign);
+    if (result.success) {
+        res.json({ changes: result.changes });
+    } else {
+        res.status(500).json({ error: result.error });
+    }
+});
+
+app.delete('/campaigns/:id', (req, res) => {
+    const result = deleteCampaign(req.params.id);
     if (result.success) {
         res.json({ changes: result.changes });
     } else {
