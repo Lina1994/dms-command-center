@@ -140,17 +140,17 @@
   margin: 0;
   font-size: 0.9em;
   color: var(--sidebar-text-color);
-  display: inline-block; /* Allow animation */
-  padding-left: 100%; /* Start text off-screen to the right */
-  animation: marquee 15s linear infinite; /* Apply marquee animation */
+  display: inline-block; 
+  padding-left: 100%; 
+  animation: marquee 15s linear infinite; 
 }
 
-/* Play animation when text overflows */
+
 .song-title-wrapper:hover .song-title-text {
   animation-play-state: running;
 }
 
-/* Keyframes for the marquee animation */
+
 @keyframes marquee {
   0% { transform: translateX(0); }
   100% { transform: translateX(-100%); }
@@ -218,7 +218,6 @@
 }
 
 
-/* New styles for database logo */
 .database-logo-link {
   display: flex;
   justify-content: center;
@@ -239,7 +238,10 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center; /* Center content vertically and horizontally */
   gap: 5px;
+  width: 90px; /* Fixed width */
+  height: 90px; /* Fixed height */
 }
 
 .sidebar.collapsed .database-logo .link-text {
@@ -247,6 +249,24 @@
 }
 
 .database-logo img {
-  width: 90px;
-  height: 90px;
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* Ensure the image covers the area */
+  border-radius: 8px; /* Optional: rounded corners */
+}
+
+.campaign-sidebar-logo-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.campaign-sidebar-logo-text {
+  font-size: 0.9em;
+  font-weight: bold;
+  text-align: center;
+  color: var(--sidebar-text-color);
+  padding: 5px;
+  word-break: break-word; /* Break long words */
 }

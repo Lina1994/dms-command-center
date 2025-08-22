@@ -3,6 +3,7 @@ import AddMapModal from './AddMapModal';
 import EditMapModal from './EditMapModal';
 import ConfirmModal from './ConfirmModal';
 import MapSheetModal from './MapSheetModal';
+import MapCard from './MapCard/MapCard'; // Import the new MapCard component
 import { useAudioPlayer } from '../../contexts/AudioPlayerContext';
 import './Maps.css';
 
@@ -26,8 +27,8 @@ function Maps() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
-  const [isMapSheetModalOpen, setIsMapSheetModalOpen] = useState(false); // State for MapSheetModal
-  const [selectedMapForSheet, setSelectedMapForSheet] = useState(null); // State for selected map for sheet
+  const [isMapSheetModalOpen, setIsMapSheetModalOpen] = useState(false);
+  const [selectedMapForSheet, setSelectedMapForSheet] = useState(null);
   const [maps, setMaps] = useState([]);
   const [currentPreviewMap, setCurrentPreviewMap] = useState(null);
   const [editingMap, setEditingMap] = useState(null);
@@ -67,9 +68,6 @@ function Maps() {
       return map.imageDataUrl;
     }
     if (map.imagePath) {
-      // In a web context, we can't access file:// paths directly.
-      // This would need to be handled by serving the images from the backend
-      // or using blobs. For now, we'll just return the path.
       return map.imagePath;
     }
     if (map.url) {
@@ -155,12 +153,12 @@ function Maps() {
     setIsEditModalOpen(false);
   };
 
-  const handleOpenMapSheetModal = (map) => { // New function to open map sheet modal
+  const handleOpenMapSheetModal = (map) => {
     setSelectedMapForSheet(map);
     setIsMapSheetModalOpen(true);
   };
 
-  const handleCloseMapSheetModal = () => { // New function to close map sheet modal
+  const handleCloseMapSheetModal = () => {
     setSelectedMapForSheet(null);
     setIsMapSheetModalOpen(false);
   };
@@ -347,7 +345,6 @@ function Maps() {
       ipcRenderer.send('display-map-player-window', updatedMap);
     }
 
-    // Save changes to backend
     try {
       const response = await fetch(`${API_BASE_URL}/maps/${updatedMap.id}`, {
         method: 'PUT',
@@ -395,8 +392,8 @@ function Maps() {
   };
 
   const currentPanPositionRef = useRef({ x: 0, y: 0 });
-  const animationFrameId = useRef(null); // Keep this for requestAnimationFrame
-  const debounceTimeoutRef = useRef(null); // For debouncing IPC sends
+  const animationFrameId = useRef(null);
+  const debounceTimeoutRef = useRef(null);
 
   const handleMouseDown = (e) => {
     if (!currentPreviewMap) return;
@@ -404,7 +401,7 @@ function Maps() {
     setIsPanning(true);
     setStartPanPoint({ x: e.clientX, y: e.clientY });
     initialPan.current = { x: currentPreviewMap.panX, y: currentPreviewMap.panY };
-    currentPanPositionRef.current = { x: currentPreviewMap.panX, y: currentPreviewMap.panY }; // Initialize currentPanPositionRef
+    currentPanPositionRef.current = { x: currentPreviewMap.panX, y: currentPreviewMap.panY };
     if (previewImageRef.current) {
       previewImageRef.current.classList.add('panning');
     }
@@ -422,12 +419,10 @@ function Maps() {
       y: initialPan.current.y + deltaY,
     };
 
-    // Update the style directly for smooth visual feedback
     if (previewImageRef.current) {
       previewImageRef.current.style.transform = `translate(${currentPanPositionRef.current.x}px, ${currentPanPositionRef.current.y}px) scale(${currentPreviewMap.zoom}) rotate(${currentPreviewMap.rotation}deg)`;
     }
 
-    // Debounce sending updates to the main process/player window
     if (debounceTimeoutRef.current) {
       clearTimeout(debounceTimeoutRef.current);
     }
@@ -437,7 +432,7 @@ function Maps() {
         panY: currentPanPositionRef.current.y
       });
       debounceTimeoutRef.current = null;
-    }, 30); // Send updates every 30ms
+    }, 30);
 
   }, [isPanning, currentPreviewMap, startPanPoint, updateCurrentMapTransform]);
 
@@ -451,7 +446,6 @@ function Maps() {
       clearTimeout(debounceTimeoutRef.current);
       debounceTimeoutRef.current = null;
     }
-    // Ensure the final position is sent to the state and IPC
     if (currentPreviewMap && (currentPanPositionRef.current.x !== currentPreviewMap.panX || currentPanPositionRef.current.y !== currentPreviewMap.panY)) {
       updateCurrentMapTransform({
         panX: currentPanPositionRef.current.x,
@@ -465,11 +459,9 @@ function Maps() {
 
   const handleMouseLeave = () => {
     if (isPanning) {
-      handleMouseUp(); // End panning if mouse leaves the area while dragging
+      handleMouseUp();
     }
   };
-
-  
 
   const filteredMaps = maps.filter(map => {
     const matchesSearchTerm = map.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -620,41 +612,18 @@ function Maps() {
           <p>No hay mapas que coincidan con tu búsqueda.</p>
         ) : (
           <ul>
-            {filteredMaps.map((map) => {
-              const imageSource = getMapImageSource(map);
-              return (
-                <li key={map.id} className="map-item" style={{ backgroundImage: imageSource ? `url('${imageSource.split('\\').join('/')}')` : 'none' }}>
-                  <div className="map-info-container" onClick={() => handleOpenMapSheetModal(map)}> 
-                    {imageSource && (
-                      <img src={imageSource} alt={map.name} className="map-thumbnail" />
-                    )}
-                    <div className="map-details">
-                      <h3>{map.name}</h3>
-                      {map.group_name && <p>Grupo: {map.group_name}</p>}
-                    </div>
-                  </div>
-                  <div className="map-actions">
-                    <button onClick={() => handleDisplayMapInPlayerWindow(map)} className="display-map-btn">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="feather feather-arrow-up-circle"><circle cx="12" cy="12" r="10"></circle><polyline points="16 12 12 8 8 12"></polyline><line x1="12" y1="16" x2="12" y2="8"></line></svg>
-                    </button>
-                    <div className="settings-menu-container">
-                      <button onClick={() => toggleSettingsMenu(map.id)} className="settings-btn">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="feather feather-settings" style={{ width: '18px', height: '18px' }}>
-                          <circle cx="12" cy="12" r="3"></circle>
-                          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 6.2 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 8.6a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-                        </svg>
-                      </button>
-                      {openSettingsMenu === map.id && (
-                        <div className="settings-dropdown">
-                          <button onClick={() => { handleOpenEditModal(map); setOpenSettingsMenu(null); }}>Editar</button>
-                          <button onClick={() => { handleDeleteRequest(map); setOpenSettingsMenu(null); }}>Eliminar</button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </li>
-              );
-            })}
+            {filteredMaps.map((map) => (
+              <MapCard 
+                key={map.id} 
+                map={map} 
+                onOpenSheet={handleOpenMapSheetModal}
+                onDisplay={handleDisplayMapInPlayerWindow}
+                onEdit={handleOpenEditModal}
+                onDelete={handleDeleteRequest}
+                openSettingsMenu={openSettingsMenu}
+                onToggleSettingsMenu={toggleSettingsMenu}
+              />
+            ))}
           </ul>
         )}
       </div>

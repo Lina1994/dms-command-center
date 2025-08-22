@@ -1,14 +1,28 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAudioPlayer } from '../../contexts/AudioPlayerContext';
-import { useSidebar } from '../../contexts/SidebarContext'; // Import useSidebar
-import Logo from '../../Images/Logo.png'; // Import Logo.png
+import { useSidebar } from '../../contexts/SidebarContext';
+import { useCampaign } from '../../contexts/CampaignContext'; // Import useCampaign
+import Logo from '../../Images/Logo.png';
 import './Sidebar.css';
+
+const CampaignLogo = () => {
+  const { currentCampaign } = useCampaign();
+
+  if (currentCampaign) {
+    if (currentCampaign.image_data) {
+      return <img src={currentCampaign.image_data} alt={currentCampaign.name} className="campaign-sidebar-logo-image" />;
+    }
+    return <div className="campaign-sidebar-logo-text">{currentCampaign.name}</div>;
+  }
+
+  return <img src={Logo} alt="Database Logo" />;
+};
 
 function Sidebar({ isCollapsed, toggleSidebar }) {
   const { currentSong, isPlaying, togglePlayPause, setVolume } = useAudioPlayer();
   const [showVolume, setShowVolume] = useState(false);
-  const { sidebarItems } = useSidebar(); // Get sidebarItems from context
+  const { sidebarItems } = useSidebar();
 
   const handleVolumeChange = (e) => {
     setVolume(e.target.value);
@@ -18,14 +32,14 @@ function Sidebar({ isCollapsed, toggleSidebar }) {
     <div className={`sidebar ${isCollapsed ? 'collapsed' : ''}`}>
       <NavLink to="/database" className="database-logo-link">
         <div className="database-logo">
-          <img src={Logo} alt="Database Logo" /> {/* Replace SVG with img tag */}
+          <CampaignLogo />
         </div>
       </NavLink>
       <ul className="sidebar-nav">
         {sidebarItems.filter(item => item.isVisible).map(item => (
           <li key={item.id}>
             <NavLink to={item.path} className={({ isActive }) => isActive ? 'active' : ''}>
-              <div dangerouslySetInnerHTML={{ __html: item.icon }} /> {/* Render icon HTML */}
+              <div dangerouslySetInnerHTML={{ __html: item.icon }} />
               <span className="link-text">{item.name}</span>
             </NavLink>
           </li>

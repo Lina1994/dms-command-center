@@ -5,6 +5,7 @@ import AddCampaignModal from './AddCampaignModal';
 import EditCampaignModal from './EditCampaignModal';
 import CampaignSheetModal from './CampaignSheetModal';
 import CampaignCard from './CampaignCard/CampaignCard';
+import { useCampaign } from '../../contexts/CampaignContext';
 
 function Campaign() {
   const [campaigns, setCampaigns] = useState([]);
@@ -12,6 +13,7 @@ function Campaign() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isSheetModalOpen, setIsSheetModalOpen] = useState(false);
   const [selectedCampaign, setSelectedCampaign] = useState(null);
+  const { currentCampaign, setCurrentCampaign } = useCampaign();
 
   useEffect(() => {
     fetch('http://localhost:3001/campaigns')
@@ -86,7 +88,9 @@ function Campaign() {
             campaign={campaign}
             onEdit={openEditModal}
             onDelete={handleDeleteCampaign}
-            onView={openSheetModal}
+            onView={openSheetModal} // This now only opens the sheet
+            onSelect={setCurrentCampaign} // This now only selects the campaign
+            isSelected={currentCampaign?.id === campaign.id}
           />
         ))}
       </div>

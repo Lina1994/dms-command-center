@@ -1,14 +1,14 @@
-import React, { useState, useEffect } from 'react'; // Import useState and useEffect
+import React, { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
-import { useSidebar } from '../../contexts/SidebarContext'; // Import useSidebar
+import { useSidebar } from '../../contexts/SidebarContext';
 import './Database.css';
 
 function Database({ theme, toggleTheme }) {
   const { sidebarItems, toggleItemVisibility } = useSidebar();
-  const [showSidebarConfig, setShowSidebarConfig] = useState(false); // New state for visibility
+  const [showSidebarConfig, setShowSidebarConfig] = useState(false);
 
   const handleEditClick = () => {
-    setShowSidebarConfig(!showSidebarConfig); // Toggle visibility
+    setShowSidebarConfig(!showSidebarConfig);
   };
 
   return (
@@ -46,11 +46,11 @@ function Database({ theme, toggleTheme }) {
         <NavLink to="/database/combat" className={({ isActive }) => isActive ? 'active' : ''}>Combat</NavLink>
         <NavLink to="/database/characters" className={({ isActive }) => isActive ? 'active' : ''}>Characters</NavLink>
         <button className="edit-sidebar-button" onClick={handleEditClick}>
-          {showSidebarConfig ? 'Done' : 'Edit Sidebar'} {/* Button text changes */}
+          {showSidebarConfig ? 'Done' : 'Edit Sidebar'}
         </button>
       </div>
 
-      {showSidebarConfig && ( // Conditionally render the configuration section
+      {showSidebarConfig && (
         <div className="sidebar-configuration">
           <h3>Sidebar Configuration</h3>
           {sidebarItems.map(item => (

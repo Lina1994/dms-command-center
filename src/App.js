@@ -15,7 +15,8 @@ import Combat from './components/Combat/Combat';
 import Characters from './components/Characters/Characters';
 
 import { AudioPlayerProvider } from './contexts/AudioPlayerContext';
-import { SidebarProvider } from './contexts/SidebarContext'; // Add this line
+import { SidebarProvider } from './contexts/SidebarContext';
+import { CampaignProvider } from './contexts/CampaignContext';
 import './styles/main.css';
 
 function App() {
@@ -45,47 +46,49 @@ function App() {
   return (
     <Router>
       <AudioPlayerProvider>
-        <SidebarProvider> {/* Wrap with SidebarProvider */}
-          <Routes>
-            {/* Ruta para la vista del jugador (sin sidebar) */}
-            <Route path="/player-view" element={<PlayerView />} />
+        <SidebarProvider>
+          <CampaignProvider>
+            <Routes>
+              {/* Ruta para la vista del jugador (sin sidebar) */}
+              <Route path="/player-view" element={<PlayerView />} />
 
-          {/* Rutas para la vista del master (con sidebar) */}
-          <Route
-            path="/*"
-            element={
-              <div className="App">
-                <Sidebar isCollapsed={isSidebarCollapsed} toggleSidebar={toggleSidebar} />
-                <div className={`content ${isSidebarCollapsed ? 'collapsed' : ''}`}>
-                  <Routes>
-                    <Route path="/" element={<h1>Bienvenido al DMS Tabletop Tool</h1>} />
-                    <Route path="/maps" element={<Maps />} />
-                    <Route path="/bestiary" element={<Bestiary />} />
-                    <Route path="/shops" element={<Shops />} />
-                    <Route path="/soundtrack" element={<Soundtrack />} />
-                    <Route path="/campaign" element={<Campaign />} />
+              {/* Rutas para la vista del master (con sidebar) */}
+              <Route
+                path="/*"
+                element={
+                  <div className="App">
+                    <Sidebar isCollapsed={isSidebarCollapsed} toggleSidebar={toggleSidebar} />
+                    <div className={`content ${isSidebarCollapsed ? 'collapsed' : ''}`}>
+                      <Routes>
+                        <Route path="/" element={<h1>Bienvenido al DMS Tabletop Tool</h1>} />
+                        <Route path="/maps" element={<Maps />} />
+                        <Route path="/bestiary" element={<Bestiary />} />
+                        <Route path="/shops" element={<Shops />} />
+                        <Route path="/soundtrack" element={<Soundtrack />} />
+                        <Route path="/campaign" element={<Campaign />} />
 
-                    {/* Nested routes for the Database section */}
-                    <Route path="/database" element={<Database theme={theme} toggleTheme={toggleTheme} />}>
-                      <Route path="maps" element={<Maps />} />
-                      <Route path="bestiary" element={<Bestiary />} />
-                      <Route path="shops" element={<Shops />} />
-                      <Route path="soundtrack" element={<Soundtrack />} />
-                      <Route path="campaign" element={<Campaign />} />
-                      {/* Add new nested routes */}
-                      <Route path="journal" element={<Journal />} />
-                      <Route path="encounters" element={<Encounters />} />
-                      <Route path="combat" element={<Combat />} />
-                      <Route path="characters" element={<Characters />} />
-                      <Route index element={<h2>Select a section from the Database navigator above.</h2>} />
-                    </Route>
-                  </Routes>
-                </div>
-              </div>
-            }
-          />
-        </Routes>
-      </SidebarProvider> {/* Close SidebarProvider */}
+                        {/* Nested routes for the Database section */}
+                        <Route path="/database" element={<Database theme={theme} toggleTheme={toggleTheme} />}>
+                          <Route path="maps" element={<Maps />} />
+                          <Route path="bestiary" element={<Bestiary />} />
+                          <Route path="shops" element={<Shops />} />
+                          <Route path="soundtrack" element={<Soundtrack />} />
+                          <Route path="campaign" element={<Campaign />} />
+                          {/* Add new nested routes */}
+                          <Route path="journal" element={<Journal />} />
+                          <Route path="encounters" element={<Encounters />} />
+                          <Route path="combat" element={<Combat />} />
+                          <Route path="characters" element={<Characters />} />
+                          <Route index element={<h2>Select a section from the Database navigator above.</h2>} />
+                        </Route>
+                      </Routes>
+                    </div>
+                  </div>
+                }
+              />
+            </Routes>
+          </CampaignProvider>
+        </SidebarProvider>
       </AudioPlayerProvider>
     </Router>
   );

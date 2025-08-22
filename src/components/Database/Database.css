@@ -5,12 +5,12 @@
 .database-header {
   display: flex;
   align-items: center;
-  gap: 15px; /* Space between title and button */
+  gap: 15px; 
   margin-bottom: 20px;
 }
 
 .database-header h2 {
-  margin: 0; /* Remove default margin from h2 */
+  margin: 0; 
 }
 
 .database-nav-horizontal {
@@ -80,7 +80,7 @@
   border-radius: 5px;
   cursor: pointer;
   transition: background-color 0.3s ease;
-  margin-left: 15px; /* Add some space from the NavLinks */
+  margin-left: 15px; 
 }
 
 .edit-sidebar-button:hover {

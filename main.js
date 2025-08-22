@@ -654,7 +654,7 @@ ipcMain.on('export-monsters-to-excel', async (event, monstersToExport) => {
 
     const dataForExcel = monstersToExport.map(monster => [
       monster.name, monster.vd, monster.type, monster.alignment, monster.origin, monster.size, monster.px, monster.armor,
-      monster.hp, monster.speed, monster.str, monster.dex, monster.con, monster.int, monster.wis, monster.cha,
+      monster.hp, monster.speed, monster.str, monster.dex, monster.con, monster.int, monster.wis, monster.car,
       monster.savingThrows, monster.skills, monster.senses, monster.languages,
       monster.damageResistances, monster.damageImmunities, monster.conditionImmunities,
       monster.damageVulnerabilities, monster.traits, monster.actions, monster.legendaryActions,
