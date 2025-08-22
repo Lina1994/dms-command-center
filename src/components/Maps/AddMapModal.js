@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useCampaign } from '../../contexts/CampaignContext';
 import './AddMapModal.css';
 
 function AddMapModal({ onClose, onAddMap, onAddMaps }) {
+  const { currentCampaign } = useCampaign();
   const [mapName, setMapName] = useState('');
   const [mapGroup, setMapGroup] = useState('');
   const [mapUrl, setMapUrl] = useState('');
@@ -9,6 +11,26 @@ function AddMapModal({ onClose, onAddMap, onAddMaps }) {
   const [mapFiles, setMapFiles] = useState([]);
   const [dimensions, setDimensions] = useState(null);
   const [keepOpen, setKeepOpen] = useState(false);
+  const [campaigns, setCampaigns] = useState([]);
+  const [selectedCampaign, setSelectedCampaign] = useState('');
+  const [songs, setSongs] = useState([]);
+  const [selectedSong, setSelectedSong] = useState('');
+
+  useEffect(() => {
+    fetch('http://localhost:3001/campaigns')
+      .then(response => response.json())
+      .then(data => setCampaigns(data))
+      .catch(error => console.error('Error fetching campaigns:', error));
+
+    fetch('http://localhost:3001/songs')
+      .then(response => response.json())
+      .then(data => setSongs(data))
+      .catch(error => console.error('Error fetching songs:', error));
+
+    if (currentCampaign) {
+      setSelectedCampaign(currentCampaign.id);
+    }
+  }, [currentCampaign]);
 
   const handleFileChange = (e) => {
     if (e.target.files.length > 1) {
@@ -50,6 +72,8 @@ function AddMapModal({ onClose, onAddMap, onAddMaps }) {
                 imageData: event.target.result,
                 originalWidth: img.width,
                 originalHeight: img.height,
+                campaign_id: selectedCampaign,
+                song_id: selectedSong
               });
             };
             img.onerror = reject;
@@ -80,7 +104,9 @@ function AddMapModal({ onClose, onAddMap, onAddMaps }) {
           imageData,
           originalWidth: dimensions.width,
           originalHeight: dimensions.height,
-          keepOpen: keepOpen
+          keepOpen: keepOpen,
+          campaign_id: selectedCampaign,
+          song_id: selectedSong
         });
         if (!keepOpen) {
           onClose();
@@ -96,7 +122,7 @@ function AddMapModal({ onClose, onAddMap, onAddMaps }) {
         console.error("Error reading file:", error);
       };
     } else {
-      onAddMap({ name: mapName, group: mapGroup, url: mapUrl, keepOpen: keepOpen });
+      onAddMap({ name: mapName, group: mapGroup, url: mapUrl, keepOpen: keepOpen, campaign_id: selectedCampaign, song_id: selectedSong });
       if (!keepOpen) {
         onClose();
       } else {
@@ -163,6 +189,38 @@ function AddMapModal({ onClose, onAddMap, onAddMaps }) {
               directory=""
               multiple
             />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="campaign">Campaña:</label>
+            <select
+              id="campaign"
+              value={selectedCampaign}
+              onChange={(e) => setSelectedCampaign(e.target.value)}
+            >
+              <option value="">Sin campaña</option>
+              {campaigns.map(campaign => (
+                <option key={campaign.id} value={campaign.id}>
+                  {campaign.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="song">Canción:</label>
+            <select
+              id="song"
+              value={selectedSong}
+              onChange={(e) => setSelectedSong(e.target.value)}
+            >
+              <option value="">Sin canción</option>
+              {songs.map(song => (
+                <option key={song.id} value={song.id}>
+                  {song.name}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="form-group checkbox-group">

@@ -2,32 +2,53 @@ import React, { useState, useEffect } from 'react';
 import './EditMapModal.css';
 
 function EditMapModal({ onClose, onEditMap, map }) {
-  console.log('EditMapModal: Renderizando. Mapa recibido:', map);
   const [mapName, setMapName] = useState('');
   const [mapGroup, setMapGroup] = useState('');
+  const [campaigns, setCampaigns] = useState([]);
+  const [selectedCampaign, setSelectedCampaign] = useState('');
+  const [songs, setSongs] = useState([]);
+  const [selectedSong, setSelectedSong] = useState('');
 
   useEffect(() => {
-    console.log('EditMapModal useEffect: Sincronizando estado con el mapa. Mapa:', map);
     if (map) {
       setMapName(map.name);
       setMapGroup(map.group || '');
+      setSelectedCampaign(map.campaign_id || '');
+      setSelectedSong(map.song_id || '');
     }
   }, [map]);
 
+  useEffect(() => {
+    fetch('http://localhost:3001/campaigns')
+      .then(response => response.json())
+      .then(data => setCampaigns(data))
+      .catch(error => console.error('Error fetching campaigns:', error));
+
+    fetch('http://localhost:3001/songs')
+      .then(response => response.json())
+      .then(data => setSongs(data))
+      .catch(error => console.error('Error fetching songs:', error));
+  }, []);
+
   const handleNameChange = (e) => {
-    console.log('EditMapModal: Cambiando nombre a:', e.target.value);
     setMapName(e.target.value);
   };
 
   const handleGroupChange = (e) => {
-    console.log('EditMapModal: Cambiando grupo a:', e.target.value);
     setMapGroup(e.target.value);
+  };
+
+  const handleCampaignChange = (e) => {
+    setSelectedCampaign(e.target.value);
+  };
+
+  const handleSongChange = (e) => {
+    setSelectedSong(e.target.value);
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log('EditMapModal: Enviando cambios...');
-    onEditMap({ ...map, name: mapName, group: mapGroup });
+    onEditMap({ ...map, name: mapName, group: mapGroup, campaign_id: selectedCampaign, song_id: selectedSong });
   };
 
   return (
@@ -54,6 +75,38 @@ function EditMapModal({ onClose, onEditMap, map }) {
               value={mapGroup}
               onChange={handleGroupChange}
             />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="campaign">Campaña:</label>
+            <select
+              id="campaign"
+              value={selectedCampaign}
+              onChange={handleCampaignChange}
+            >
+              <option value="">Sin campaña</option>
+              {campaigns.map(campaign => (
+                <option key={campaign.id} value={campaign.id}>
+                  {campaign.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="song">Canción:</label>
+            <select
+              id="song"
+              value={selectedSong}
+              onChange={handleSongChange}
+            >
+              <option value="">Sin canción</option>
+              {songs.map(song => (
+                <option key={song.id} value={song.id}>
+                  {song.name}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="modal-actions">

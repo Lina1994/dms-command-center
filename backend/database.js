@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS monsters (
 );
 
 CREATE TABLE IF NOT EXISTS maps (
-    id TEXT PRIMARY KEY, name TEXT, group_name TEXT, url TEXT, imagePath TEXT, image_data BLOB, keepOpen INTEGER, zoom REAL, rotation REAL, panX REAL, panY REAL, original_width INTEGER, original_height INTEGER, notes TEXT, song_id TEXT, FOREIGN KEY (song_id) REFERENCES songs (id)
+    id TEXT PRIMARY KEY, name TEXT, group_name TEXT, url TEXT, imagePath TEXT, image_data BLOB, keepOpen INTEGER, zoom REAL, rotation REAL, panX REAL, panY REAL, original_width INTEGER, original_height INTEGER, notes TEXT, song_id TEXT, campaign_id TEXT, FOREIGN KEY (song_id) REFERENCES songs (id), FOREIGN KEY (campaign_id) REFERENCES campaigns (id)
 );
 
 CREATE TABLE IF NOT EXISTS shops ( id TEXT PRIMARY KEY, name TEXT );
@@ -86,6 +86,18 @@ const addSongIdColumnStmt = `
     PRAGMA foreign_keys = ON;
 `;
 
+const addCampaignIdColumnStmt = `
+    PRAGMA foreign_keys = OFF;
+    CREATE TABLE IF NOT EXISTS maps_backup_campaign (
+        id TEXT PRIMARY KEY, name TEXT, group_name TEXT, url TEXT, imagePath TEXT, image_data BLOB, keepOpen INTEGER, zoom REAL, rotation REAL, panX REAL, panY REAL, original_width INTEGER, original_height INTEGER, notes TEXT, song_id TEXT, campaign_id TEXT
+    );
+    INSERT OR IGNORE INTO maps_backup_campaign SELECT id, name, group_name, url, imagePath, image_data, keepOpen, zoom, rotation, panX, panY, original_width, original_height, notes, song_id, NULL FROM maps;
+    DROP TABLE IF EXISTS maps;
+    ALTER TABLE maps_backup_campaign RENAME TO maps;
+    CREATE INDEX IF NOT EXISTS idx_maps_campaign_id ON maps (campaign_id);
+    PRAGMA foreign_keys = ON;
+`;
+
 // Function to check if a column exists
 function columnExists(tableName, columnName) {
     const result = db.prepare(`PRAGMA table_info(${tableName})`).all();
@@ -102,6 +114,11 @@ function setupDatabase() {
         console.log('Adding song_id column to maps table...');
         db.exec(addSongIdColumnStmt);
         console.log('song_id column added to maps table.');
+    }
+    if (!columnExists('maps', 'campaign_id')) {
+        console.log('Adding campaign_id column to maps table...');
+        db.exec(addCampaignIdColumnStmt);
+        console.log('campaign_id column added to maps table.');
     }
     if (!columnExists('categories', 'type')) {
         db.exec('ALTER TABLE categories ADD COLUMN type TEXT;');
@@ -179,7 +196,7 @@ function deleteAllMonsters() {
 function getMaps() {
     console.log('Backend: getMaps called');
     try {
-        const stmt = db.prepare('SELECT m.*, s.name AS song_name, s.filePath AS song_filePath FROM maps m LEFT JOIN songs s ON m.song_id = s.id');
+        const stmt = db.prepare('SELECT m.*, s.name AS song_name, s.filePath AS song_filePath, c.name AS campaign_name FROM maps m LEFT JOIN songs s ON m.song_id = s.id LEFT JOIN campaigns c ON m.campaign_id = c.id');
         const data = stmt.all();
         const mapsWithImageData = data.map(map => {
             const newMap = { ...map }; // Create a copy to avoid modifying the original map object
@@ -209,7 +226,7 @@ function addMap(map) {
             imageDataBuffer = Buffer.from(base64Data, 'base64');
         }
 
-        const stmt = db.prepare('INSERT INTO maps (id, name, group_name, url, imagePath, image_data, keepOpen, zoom, rotation, panX, panY, original_width, original_height, notes, song_id) VALUES (@id, @name, @group_name, @url, @imagePath, @image_data, @keepOpen, @zoom, @rotation, @panX, @panY, @original_width, @original_height, @notes, @song_id)');
+        const stmt = db.prepare('INSERT INTO maps (id, name, group_name, url, imagePath, image_data, keepOpen, zoom, rotation, panX, panY, original_width, original_height, notes, song_id, campaign_id) VALUES (@id, @name, @group_name, @url, @imagePath, @image_data, @keepOpen, @zoom, @rotation, @panX, @panY, @original_width, @original_height, @notes, @song_id, @campaign_id)');
         const mapToInsert = {
             id: map.id,
             name: map.name,
@@ -225,7 +242,8 @@ function addMap(map) {
             original_width: map.originalWidth || null,
             original_height: map.originalHeight || null,
             notes: map.notes || null,
-            song_id: map.song_id || null
+            song_id: map.song_id || null,
+            campaign_id: map.campaign_id || null
         };
         const info = stmt.run(mapToInsert);
         console.log('Backend: addMap successful, info:', info);
@@ -237,7 +255,7 @@ function addMap(map) {
 }
 
 function addMaps(maps) {
-    const stmt = db.prepare('INSERT INTO maps (id, name, group_name, url, imagePath, image_data, keepOpen, zoom, rotation, panX, panY, original_width, original_height, notes, song_id) VALUES (@id, @name, @group_name, @url, @imagePath, @image_data, @keepOpen, @zoom, @rotation, @panX, @panY, @original_width, @original_height, @notes, @song_id)');
+    const stmt = db.prepare('INSERT INTO maps (id, name, group_name, url, imagePath, image_data, keepOpen, zoom, rotation, panX, panY, original_width, original_height, notes, song_id, campaign_id) VALUES (@id, @name, @group_name, @url, @imagePath, @image_data, @keepOpen, @zoom, @rotation, @panX, @panY, @original_width, @original_height, @notes, @song_id, @campaign_id)');
     const transaction = db.transaction((maps) => {
         const ids = [];
         for (const map of maps) {
@@ -261,7 +279,8 @@ function addMaps(maps) {
                 original_width: map.originalWidth || null,
                 original_height: map.originalHeight || null,
                 notes: map.notes || null,
-                song_id: map.song_id || null
+                song_id: map.song_id || null,
+                campaign_id: map.campaign_id || null
             };
             stmt.run(mapToInsert);
             ids.push({ id: map.id });
@@ -286,7 +305,7 @@ function updateMap(map) {
             imageDataBuffer = Buffer.from(base64Data, 'base64');
         }
 
-        const stmt = db.prepare('UPDATE maps SET name = @name, group_name = @group_name, url = @url, imagePath = @imagePath, image_data = @image_data, keepOpen = @keepOpen, zoom = @zoom, rotation = @rotation, panX = @panX, panY = @panY, original_width = @original_width, original_height = @original_height, notes = @notes, song_id = @song_id WHERE id = @id');
+        const stmt = db.prepare('UPDATE maps SET name = @name, group_name = @group_name, url = @url, imagePath = @imagePath, image_data = @image_data, keepOpen = @keepOpen, zoom = @zoom, rotation = @rotation, panX = @panX, panY = @panY, original_width = @original_width, original_height = @original_height, notes = @notes, song_id = @song_id, campaign_id = @campaign_id WHERE id = @id');
         const mapToUpdate = {
             id: map.id,
             name: map.name,
@@ -302,7 +321,8 @@ function updateMap(map) {
             original_width: map.originalWidth || null,
             original_height: map.originalHeight || null,
             notes: map.notes || null,
-            song_id: map.song_id || null
+            song_id: map.song_id || null,
+            campaign_id: map.campaign_id || null
         };
         const info = stmt.run(mapToUpdate);
         return { success: true, changes: info.changes };

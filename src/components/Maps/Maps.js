@@ -5,6 +5,7 @@ import ConfirmModal from './ConfirmModal';
 import MapSheetModal from './MapSheetModal';
 import MapCard from './MapCard/MapCard'; // Import the new MapCard component
 import { useAudioPlayer } from '../../contexts/AudioPlayerContext';
+import { useCampaign } from '../../contexts/CampaignContext';
 import './Maps.css';
 
 let ipcRenderer = null;
@@ -40,6 +41,7 @@ function Maps() {
   const [selectedGroup, setSelectedGroup] = useState('');
   const [playerWindowDimensions, setPlayerWindowDimensions] = useState(null);
   const { playSong, stopSong, currentSong } = useAudioPlayer();
+  const { currentCampaign } = useCampaign();
 
   const previewContainerRef = useRef(null);
   const previewImageRef = useRef(null);
@@ -268,7 +270,7 @@ function Maps() {
       if (!response.ok) {
         throw new Error('Network response was not ok');
       }
-      setMaps(prevMaps => prevMaps.map(map => (map.id === mapToUpdate.id ? editedMap : map)));
+      fetchMaps(); // Refetch maps to get the updated song information
       handleCloseEditModal();
     } catch (error) {
       console.error('Error editing map:', error);
@@ -467,7 +469,8 @@ function Maps() {
     const matchesSearchTerm = map.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                               (map.group_name && map.group_name.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesGroup = selectedGroup === '' || (map.group_name && map.group_name === selectedGroup);
-    return matchesSearchTerm && matchesGroup;
+    const matchesCampaign = !currentCampaign || map.campaign_id === currentCampaign.id;
+    return matchesSearchTerm && matchesGroup && matchesCampaign;
   });
 
   const previewImageSource = currentPreviewMap ? getMapImageSource(currentPreviewMap) : '';
