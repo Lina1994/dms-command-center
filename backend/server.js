@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const { setupDatabase, migrateDataFromJsons, getMonsters, addMonster, updateMonster, deleteMonster, deleteAllMonsters, getMaps, addMap, addMaps, updateMap, deleteMap, getShops, addShop, updateShop, deleteShop, addCategory, updateCategory, deleteCategory, addItem, updateItem, deleteItem, getSongs, addSong, updateSong, deleteSong, syncShops, getCampaigns, addCampaign, updateCampaign, deleteCampaign } = require('./database');
+const { setupDatabase, migrateDataFromJsons, getMonsters, addMonster, updateMonster, deleteMonster, deleteAllMonsters, getMaps, addMap, addMaps, updateMap, deleteMap, getShops, addShop, updateShop, deleteShop, addCategory, updateCategory, deleteCategory, addItem, updateItem, deleteItem, getSongs, addSong, updateSong, deleteSong, syncShops, getCampaigns, addCampaign, updateCampaign, deleteCampaign, getCharacters, addCharacter, updateCharacter, deleteCharacter } = require('./database');
 
 const app = express();
 const port = 3001;
@@ -294,6 +294,45 @@ app.put('/campaigns/:id', (req, res) => {
 
 app.delete('/campaigns/:id', (req, res) => {
     const result = deleteCampaign(req.params.id);
+    if (result.success) {
+        res.json({ changes: result.changes });
+    } else {
+        res.status(500).json({ error: result.error });
+    }
+});
+
+// API Endpoints for Characters
+app.get('/characters', (req, res) => {
+    const campaignId = req.query.campaignId; // Get campaignId from query parameter
+    const result = getCharacters(campaignId);
+    if (result.success) {
+        res.json(result.data);
+    } else {
+        res.status(500).json({ error: result.error });
+    }
+});
+
+app.post('/characters', (req, res) => {
+    const result = addCharacter(req.body);
+    if (result.success) {
+        res.status(201).json({ id: result.id });
+    } else {
+        res.status(500).json({ error: result.error });
+    }
+});
+
+app.put('/characters/:id', (req, res) => {
+    const character = { ...req.body, id: req.params.id };
+    const result = updateCharacter(character);
+    if (result.success) {
+        res.json({ changes: result.changes });
+    } else {
+        res.status(500).json({ error: result.error });
+    }
+});
+
+app.delete('/characters/:id', (req, res) => {
+    const result = deleteCharacter(req.params.id);
     if (result.success) {
         res.json({ changes: result.changes });
     } else {

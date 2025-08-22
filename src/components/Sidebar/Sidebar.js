@@ -36,14 +36,17 @@ function Sidebar({ isCollapsed, toggleSidebar }) {
         </div>
       </NavLink>
       <ul className="sidebar-nav">
-        {sidebarItems.filter(item => item.isVisible).map(item => (
-          <li key={item.id}>
-            <NavLink to={item.path} className={({ isActive }) => isActive ? 'active' : ''}>
-              <div dangerouslySetInnerHTML={{ __html: item.icon }} />
-              <span className="link-text">{item.name}</span>
-            </NavLink>
-          </li>
-        ))}
+        {sidebarItems.filter(item => item.isVisible).map(item => {
+          console.log(`Sidebar: Rendering NavLink for ${item.name} with path: ${item.path}`);
+          return (
+            <li key={item.id}>
+              <NavLink to={item.path} className={({ isActive }) => isActive ? 'active' : ''}>
+                <div dangerouslySetInnerHTML={{ __html: item.icon }} />
+                <span className="link-text">{item.name}</span>
+              </NavLink>
+            </li>
+          );
+        })}
       </ul>
       <div className="sidebar-footer">
         {currentSong && (

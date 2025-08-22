@@ -71,6 +71,47 @@ CREATE TABLE IF NOT EXISTS campaigns (
     participants TEXT,
     notes TEXT
 );
+
+CREATE TABLE IF NOT EXISTS characters (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    class TEXT,
+    level INTEGER,
+    background TEXT,
+    race TEXT,
+    alignment TEXT,
+    playerName TEXT,
+    experiencePoints INTEGER,
+    strength INTEGER,
+    dexterity INTEGER,
+    constitution INTEGER,
+    intelligence INTEGER,
+    wisdom INTEGER,
+    charisma INTEGER,
+    proficiencyBonus INTEGER,
+    armorClass INTEGER,
+    initiative INTEGER,
+    speed INTEGER,
+    maxHitPoints INTEGER,
+    currentHitPoints INTEGER,
+    temporaryHitPoints INTEGER,
+    hitDice TEXT,
+    otherProficienciesAndLanguages TEXT,
+    equipment TEXT,
+    featuresAndTraits TEXT,
+    age TEXT,
+    height TEXT,
+    weight TEXT,
+    eyes TEXT,
+    skin TEXT,
+    hair TEXT,
+    image BLOB,
+    spellcastingAbility TEXT,
+    spellSaveDC INTEGER,
+    spellAttackBonus INTEGER,
+    campaign_id TEXT,
+    FOREIGN KEY (campaign_id) REFERENCES campaigns (id)
+);
 `;
 
 // Add migration for song_id column to maps table
@@ -165,7 +206,7 @@ function updateMonster(monster) {
             ...monster,
             car: monster.cha // Map 'cha' from frontend to 'car' for DB
         };
-        const stmt = db.prepare('UPDATE monsters SET name = @name, vd = @vd, type = @type, alignment = @alignment, origin = @origin, size = @size, px = @px, armor = @armor, hp = @hp, speed = @speed, str = @str, dex = @dex, con = @con, int = @int, wis = @wis, car = @car, savingThrows = @savingThrows, skills = @skills, senses = @senses, languages = @languages, damageResistances = @damageResistances, damageImmunities = @damageImmunities, conditionImmunities = @conditionImmunities, damageVulnerabilities = @damageVulnerabilities, traits = @traits, actions = @actions, legendaryActions = @legendaryActions, reactions = @reactions, description = @description, image = @image WHERE id = @id');
+        const stmt = db.prepare('UPDATE monsters SET name = @name, vd = @vd, type = @type, alignment = @alignment, origin = @origin, size = @size, px = @px, armor = @armor, hp = @hp, speed = @speed, str = @str, dex = @dex, con = @con, int = @int, wis = @wis, car = @car, savingThrows = @savingThrows, skills = @skills, senses = @senses, languages = @languages, damageResistances, damageImmunities, conditionImmunities, damageVulnerabilities, traits, actions, legendaryActions, reactions, description, image = @image WHERE id = @id');
         const info = stmt.run(monsterToUpdate);
         return { success: true, changes: info.changes };
     } catch (error) {
@@ -646,8 +687,6 @@ function updateCampaign(campaign) {
         if (campaign.image_data && campaign.image_data.startsWith('data:image')) {
             const base64Data = campaign.image_data.replace(/^data:image\/\w+;base64,/, "");
             imageDataBuffer = Buffer.from(base64Data, 'base64');
-        } else {
-            imageDataBuffer = campaign.image_data;
         }
         const stmt = db.prepare('UPDATE campaigns SET name = @name, image_data = @image_data, description = @description, author = @author, game = @game, participants = @participants, notes = @notes WHERE id = @id');
         const campaignToUpdate = { ...campaign, image_data: imageDataBuffer };
@@ -668,6 +707,126 @@ function deleteCampaign(campaignId) {
     }
 }
 
+// Character CRUD
+function getCharacters(campaignId = null) {
+    try {
+        let stmt;
+        if (campaignId) {
+            stmt = db.prepare('SELECT c.*, ca.name AS campaign_name FROM characters c LEFT JOIN campaigns ca ON c.campaign_id = ca.id WHERE c.campaign_id = ?');
+            return { success: true, data: stmt.all(campaignId).map(char => {
+                if (char.image) {
+                    char.image = `data:image/png;base64,${char.image.toString('base64')}`;
+                }
+                return char;
+            }) };
+        } else {
+            stmt = db.prepare('SELECT c.*, ca.name AS campaign_name FROM characters c LEFT JOIN campaigns ca ON c.campaign_id = ca.id');
+            return { success: true, data: stmt.all().map(char => {
+                if (char.image) {
+                    char.image = `data:image/png;base64,${char.image.toString('base64')}`;
+                }
+                return char;
+            }) };
+        }
+    } catch (error) {
+        console.error('Backend: Error in getCharacters:', error.message);
+        return { success: false, error: error.message };
+    }
+}
+
+function addCharacter(character) {
+    console.log('Backend: addCharacter called with:', character.name);
+    try {
+        let imageDataBuffer = null;
+        if (character.image) {
+            const base64Data = character.image.replace(/^data:image\/\w+;base64,/, "");
+            imageDataBuffer = Buffer.from(base64Data, 'base64');
+        }
+
+        const stmt = db.prepare('INSERT INTO characters (id, name, class, level, background, race, alignment, playerName, experiencePoints, strength, dexterity, constitution, intelligence, wisdom, charisma, proficiencyBonus, armorClass, initiative, speed, maxHitPoints, currentHitPoints, temporaryHitPoints, hitDice, otherProficienciesAndLanguages, equipment, featuresAndTraits, age, height, weight, eyes, skin, hair, image, spellcastingAbility, spellSaveDC, spellAttackBonus, campaign_id) VALUES (@id, @name, @class, @level, @background, @race, @alignment, @playerName, @experiencePoints, @strength, @dexterity, @constitution, @intelligence, @wisdom, @charisma, @proficiencyBonus, @armorClass, @initiative, @speed, @maxHitPoints, @currentHitPoints, @temporaryHitPoints, @hitDice, @otherProficienciesAndLanguages, @equipment, @featuresAndTraits, @age, @height, @weight, @eyes, @skin, @hair, @image, @spellcastingAbility, @spellSaveDC, @spellAttackBonus, @campaign_id)');
+        const characterToInsert = {
+            ...character,
+            image: imageDataBuffer,
+            level: character.level || null,
+            experiencePoints: character.experiencePoints || null,
+            strength: character.strength || null,
+            dexterity: character.dexterity || null,
+            constitution: character.constitution || null,
+            intelligence: character.intelligence || null,
+            wisdom: character.wisdom || null,
+            charisma: character.charisma || null,
+            proficiencyBonus: character.proficiencyBonus || null,
+            armorClass: character.armorClass || null,
+            initiative: character.initiative || null,
+            speed: character.speed || null,
+            maxHitPoints: character.maxHitPoints || null,
+            currentHitPoints: character.currentHitPoints || null,
+            temporaryHitPoints: character.temporaryHitPoints || null,
+            spellSaveDC: character.spellSaveDC || null,
+            spellAttackBonus: character.spellAttackBonus || null,
+        };
+        const info = stmt.run(characterToInsert);
+        console.log('Backend: addCharacter successful, info:', info);
+        return { success: true, id: character.id };
+    } catch (error) {
+        console.error('Backend: Error in addCharacter:', error.message);
+        return { success: false, error: error.message };
+    }
+}
+
+function updateCharacter(character) {
+    console.log('Backend: updateCharacter called with:', character.name);
+    try {
+        let imageDataBuffer = null;
+        if (character.image && character.image.startsWith('data:image')) {
+            const base64Data = character.image.replace(/^data:image\/\w+;base64,/, "");
+            imageDataBuffer = Buffer.from(base64Data, 'base64');
+        } else {
+            imageDataBuffer = character.image; // Keep existing BLOB data if not a new base64 string
+        }
+
+        const stmt = db.prepare('UPDATE characters SET name = @name, class = @class, level = @level, background = @background, race = @race, alignment = @alignment, playerName = @playerName, experiencePoints = @experiencePoints, strength = @strength, dexterity = @dexterity, constitution = @constitution, intelligence = @intelligence, wisdom = @wisdom, charisma = @charisma, proficiencyBonus = @proficiencyBonus, armorClass = @armorClass, initiative = @initiative, speed = @speed, maxHitPoints = @maxHitPoints, currentHitPoints = @currentHitPoints, temporaryHitPoints = @temporaryHitPoints, hitDice = @hitDice, otherProficienciesAndLanguages = @otherProficienciesAndLanguages, equipment = @equipment, featuresAndTraits = @featuresAndTraits, age = @age, height = @height, weight = @weight, eyes = @eyes, skin = @skin, hair = @hair, image = @image, spellcastingAbility = @spellcastingAbility, spellSaveDC = @spellSaveDC, spellAttackBonus = @spellAttackBonus, campaign_id = @campaign_id WHERE id = @id');
+        const characterToUpdate = {
+            ...character,
+            image: imageDataBuffer,
+            level: character.level || null,
+            experiencePoints: character.experiencePoints || null,
+            strength: character.strength || null,
+            dexterity: character.dexterity || null,
+            constitution: character.constitution || null,
+            intelligence: character.intelligence || null,
+            wisdom: character.wisdom || null,
+            charisma: character.charisma || null,
+            proficiencyBonus: character.proficiencyBonus || null,
+            armorClass: character.armorClass || null,
+            initiative: character.initiative || null,
+            speed: character.speed || null,
+            maxHitPoints: character.maxHitPoints || null,
+            currentHitPoints: character.currentHitPoints || null,
+            temporaryHitPoints: character.temporaryHitPoints || null,
+            spellSaveDC: character.spellSaveDC || null,
+            spellAttackBonus: character.spellAttackBonus || null,
+        };
+        const info = stmt.run(characterToUpdate);
+        return { success: true, changes: info.changes };
+    } catch (error) {
+        console.error('Backend: Error in updateCharacter:', error.message);
+        return { success: false, error: error.message };
+    }
+}
+
+function deleteCharacter(characterId) {
+    console.log('Backend: deleteCharacter called with ID:', characterId);
+    try {
+        const stmt = db.prepare('DELETE FROM characters WHERE id = ?');
+        const info = stmt.run(characterId);
+        return { success: true, changes: info.changes };
+    } catch (error) {
+        console.error('Backend: Error in deleteCharacter:', error.message);
+        return { success: false, error: error.message };
+    }
+}
+
 // Function to migrate data from JSON
 function migrateDataFromJsons() {
     console.log('Comprobando si es necesaria la migración de datos...');
@@ -675,7 +834,7 @@ function migrateDataFromJsons() {
     const monsterCount = db.prepare('SELECT COUNT(*) as count FROM monsters').get().count;
     if (monsterCount === 0 && fs.existsSync(monstersFilePath)) {
         const monsters = JSON.parse(fs.readFileSync(monstersFilePath, 'utf8'));
-        const insert = db.prepare('INSERT INTO monsters (id, name, vd, type, alignment, origin, size, px, armor, hp, speed, str, dex, con, int, wis, car, savingThrows, skills, senses, languages, damageResistances, damageImmunities, conditionImmunities, damageVulnerabilities, traits, actions, legendaryActions, reactions, description, image) VALUES (@id, @name, @vd, @type, @alignment, @origin, @size, @px, @armor, @hp, @speed, @str, @dex, @con, @int, @wis, @car, @savingThrows, @skills, @senses, @languages, @damageResistances, @damageImmunities, @conditionImmunities, @damageVulnerabilities, @traits, @actions, @legendaryActions, @reactions, @description, @image)');
+        const insert = db.prepare('INSERT INTO monsters (id, name, vd, type, alignment, origin, size, px, armor, hp, speed, str, dex, con, int, wis, car, savingThrows, skills, senses, languages, damageResistances, damageImmunities, conditionImmunities, damageVulnerabilities, traits, actions, legendaryActions, reactions, description, image) VALUES (@id, @name, @vd, @type, @alignment, @origin, @size, @px, @armor, @hp, @speed, @str, @dex, @con, @int, @wis, @car, @savingThrows, @skills, @senses, @languages, @damageResistances, @damageImmunities, @conditionImmunabilities, @damageVulnerabilities, @traits, @actions, @legendaryActions, @reactions, @description, @image)');
         db.transaction((data) => {
             for (const monster of data) insert.run(monster);
         })(monsters);
@@ -728,7 +887,7 @@ function migrateDataFromJsons() {
                         insertCategory.run({ id: category.id, shop_id: shop.id, name: category.name, type: categoryType });
                         if (category.items) {
                             for (const item of category.items) {
-                                if (categoryType === 'weapons') {
+                                if (category.type === 'weapons') {
                                     insertWeapon.run({
                                         id: item.id,
                                         category_id: category.id,
@@ -740,7 +899,7 @@ function migrateDataFromJsons() {
                                         Propiedades: item.properties,
                                         Origen: item.origin
                                     });
-                                } else if (categoryType === 'armors') {
+                                } else if (category.type === 'armors') {
                                     insertArmor.run({
                                         id: item.id,
                                         category_id: category.id,
@@ -766,4 +925,4 @@ function migrateDataFromJsons() {
 }
 
 // Exportamos
-module.exports = { db, setupDatabase, migrateDataFromJsons, getMonsters, addMonster, updateMonster, deleteMonster, deleteAllMonsters, getMaps, addMap, addMaps, updateMap, deleteMap, getShops, addShop, updateShop, deleteShop, addCategory, updateCategory, deleteCategory, addItem, updateItem, deleteItem, getSongs, addSong, updateSong, deleteSong, syncShops, getCampaigns, addCampaign, updateCampaign, deleteCampaign };
+module.exports = { db, setupDatabase, migrateDataFromJsons, getMonsters, addMonster, updateMonster, deleteMonster, deleteAllMonsters, getMaps, addMap, addMaps, updateMap, deleteMap, getShops, addShop, updateShop, deleteShop, addCategory, updateCategory, deleteCategory, addItem, updateItem, deleteItem, getSongs, addSong, updateSong, deleteSong, syncShops, getCampaigns, addCampaign, updateCampaign, deleteCampaign, getCharacters, addCharacter, updateCharacter, deleteCharacter };

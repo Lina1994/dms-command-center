@@ -66,6 +66,7 @@ function App() {
                         <Route path="/shops" element={<Shops />} />
                         <Route path="/soundtrack" element={<Soundtrack />} />
                         <Route path="/campaign" element={<Campaign />} />
+                        <Route path="/characters" element={<Characters />} /> {/* Added top-level route for Characters */}
 
                         {/* Nested routes for the Database section */}
                         <Route path="/database" element={<Database theme={theme} toggleTheme={toggleTheme} />}>
